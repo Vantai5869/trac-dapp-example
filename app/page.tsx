@@ -1,6 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Container,
+  Button,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Alert,
+  Stack,
+} from '@mui/material';
 
 type Row = { id: number; name: string; tx: string };
 
@@ -9,13 +25,27 @@ const POLL_MS = 3000;
 
 function normalizeRows(payload: any): Row[] {
   // Preferred shape: { pokemons: "[ {id,name,tx}, ... ]" }
-  const raw = (payload as any).value.pokemons;
-  const arr = JSON.parse(raw)
-  return arr.map((item: any, idx: number) => ({
-    id: typeof item?.id === 'number' ? item.id : idx,
-    name: String(item?.name ?? ''),
-    tx: String(item?.tx ?? ''),
-  }));
+  try {
+    let raw: any = (payload as any)?.pokemons;
+    if (!raw && (payload as any)?.value) {
+      const v: any = (payload as any).value;
+      raw = typeof v === 'object' ? v.pokemons : undefined;
+      if (!raw && typeof v === 'string') {
+        try { raw = JSON.parse(v).pokemons; } catch {}
+      }
+    }
+    if (raw) {
+      const arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (Array.isArray(arr)) {
+        return arr.map((item: any, idx: number) => ({
+          id: typeof item?.id === 'number' ? item.id : idx,
+          name: String(item?.name ?? ''),
+          tx: String(item?.tx ?? ''),
+        }));
+      }
+    }
+  } catch {}
+  return [];
 }
 
 export default function Page() {
@@ -54,7 +84,6 @@ export default function Page() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      // To keep UI responsive, just refresh state; log response to console
       const text = await res.text();
       try { console.log('Catch response (JSON):', JSON.parse(text)); } catch { console.log('Catch response (text):', text); }
       fetchState();
@@ -65,36 +94,44 @@ export default function Page() {
   }, [fetchState]);
 
   return (
-    <main>
-      <h1>Pokedex</h1>
-      <button onClick={handleCatch}>Catch</button>
-      {error && <p style={{ color: 'crimson' }}>Error: {error}</p>}
-      {loading && <p>Loading…</p>}
+    <>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div">Pokedex</Typography>
+        </Toolbar>
+      </AppBar>
+      <Container sx={{ mt: 3 }}>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+          <Button variant="contained" color="primary" onClick={handleCatch}>Catch</Button>
+          {loading && <Typography variant="body2">Loading…</Typography>}
+        </Stack>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>Error: {error}</Alert>}
 
-      <table>
-        <caption>Pokedex</caption>
-        <thead>
-          <tr>
-            <th>name</th>
-            <th>tx</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id}>
-              <td>{r.name}</td>
-              <td className="mono">{r.tx}</td>
-            </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={2}>
-                <em>No entries yet.</em>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </main>
+        <TableContainer component={Paper}>
+          <Table aria-label="Pokedex table">
+            <caption>Pokedex</caption>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Tx</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rows.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell>{r.name}</TableCell>
+                  <TableCell sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace' }}>{r.tx}</TableCell>
+                </TableRow>
+              ))}
+              {rows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={2}><em>No entries yet.</em></TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Container>
+    </>
   );
 }
