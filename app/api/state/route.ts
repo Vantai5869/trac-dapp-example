@@ -5,7 +5,7 @@ import { upstreamFetch } from '@/lib/upstream';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const key = searchParams.get('key');
-  const qs = key ? `?key=${encodeURIComponent(key)}` : '';
+  const qs = key ? `?key=${encodeURIComponent(key)}&confirmed=false` : '';
   const upstreamRes = await upstreamFetch(`/state${qs}`, { cache: 'no-store' });
 
   const body = await upstreamRes.text();
