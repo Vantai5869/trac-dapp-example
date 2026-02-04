@@ -1,7 +1,30 @@
-# Pokedex (Next.js)
+# Pokédex (Next.js)
 
-curl -X POST http://127.0.0.1:5001/v1/tx -H 'Content-Type: applicaton/json' -d '{"command":"{\"type\":\"catch\",\"value\":{\"msg\":\"hi\"}}"}'
-0cbaa92114907a941fbc722540eb313ea95f156036629d74038cd0ae5f1a1bd0
-curl "http://localhost:5001/v1/state?key=app%2Fpokedex%2F0cbaa92114907a941fbc722540eb313ea95f156036629d74038cd0ae5f1a1bd0"
+This dapp talks to a `trac-peer` HTTP RPC (default `http://127.0.0.1:5001/v1`) and uses the TAP wallet browser extension for **account + signing**.
 
-app/pokedex/0cbaa92114907a941fbc722540eb313ea95f156036629d74038cd0ae5f1a1bd0
+## Configure peer RPC
+
+The app server proxies requests to `trac-peer` via environment variables:
+
+```sh
+UPSTREAM_PROTOCOL=http
+UPSTREAM_HOST=127.0.0.1
+UPSTREAM_PORT=5001
+UPSTREAM_PREFIX=/v1
+```
+
+## Run
+
+```sh
+npm install
+npm run dev
+```
+
+## Peer endpoints used
+
+- Contract interface: `GET /v1/contract/schema`
+- Contract tx flow:
+  - `GET /v1/contract/nonce`
+  - `POST /v1/contract/tx/prepare`
+  - `POST /v1/contract/tx` (`sim: true` then `sim: false`)
+- State (Pokédex): `GET /v1/state?key=app/pokedex/<pubKeyHex>&confirmed=false`
