@@ -289,11 +289,15 @@ export default function Page() {
       const context = contextRes?.msb;
       if (!context || typeof context !== 'object') throw new Error('Failed to fetch tx context from peer');
 
+      const peerUrlRes = await httpJson<{ peerUrl: string }>('/api/peer-url', { cache: 'no-store' });
+      const peerUrl = peerUrlRes?.peerUrl;
+
       // Create walletRequest with all data needed for wallet to hash and sign
       const walletRequest = {
         prepared_command,
         nonce,
         context,
+        peerUrl,
       };
 
       console.log('[trac-peer] outgoing walletRequest for signTracTx:', walletRequest);
